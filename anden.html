@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANDÉN — Seguimiento de envíos</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root{
+  --bg-void:#12151c;
+  --bg-panel:#1b2027;
+  --bg-tile:#232a34;
+  --bg-tile-dark:#1c222b;
+  --amber:#f2b705;
+  --amber-dim:#7a6116;
+  --teal:#2f9e93;
+  --cream:#ede6d6;
+  --cream-dim:#a8a196;
+  --rust:#c1502e;
+  --line-muted:#3a4048;
+  --font-display:'Oswald', sans-serif;
+  --font-mono:'Space Mono', monospace;
+  --scan-opacity:0.015;
+}
+
+[data-theme="light"]{
+  --bg-void:#eef0f2;
+  --bg-panel:#ffffff;
+  --bg-tile:#f2f3f5;
+  --bg-tile-dark:#e6e8eb;
+  --amber:#b8790a;
+  --amber-dim:#e8c98a;
+  --teal:#1f7d73;
+  --cream:#1c2027;
+  --cream-dim:#5b6069;
+  --rust:#a83f22;
+  --line-muted:#d3d7db;
+  --scan-opacity:0.03;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg-void);
+  color:var(--cream);
+  font-family:var(--font-mono);
+  min-height:100vh;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(120,120,120,var(--scan-opacity)) 0px, rgba(120,120,120,var(--scan-opacity)) 1px, transparent 1px, transparent 3px);
+  padding:32px 16px 64px;
+  transition:background-color 0.2s ease, color 0.2s ease;
+}
+
+.wrap{max-width:960px;margin:0 auto;}
+
+/* ---------- HEADER ---------- */
+header.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  border-bottom:2px solid var(--line-muted);
+  padding-bottom:18px;
+  margin-bottom:8px;
+  flex-wrap:wrap;
+  gap:16px;
+}
+.brand{display:flex;flex-direction:column;gap:2px;}
+.brand .mark{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:2.6rem;
+  letter-spacing:0.12em;
+  color:var(--cream);
+  line-height:1;
+}
+.brand .mark span{color:var(--amber);}
+.brand .tagline{
+  font-size:0.72rem;
+  letter-spacing:0.08em;
+  color:var(--cream-dim);
+  text-transform:uppercase;
+}
+.header-right{
+  display:flex;
+  align-items:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.icon-btn{
+  background:var(--bg-tile-dark);
+  border:1px solid var(--line-muted);
+  color:var(--cream-dim);
+  font-family:var(--font-mono);
+  font-size:0.85rem;
+  padding:9px 11px;
+  cursor:pointer;
+  line-height:1;
+}
+.icon-btn:hover{color:var(--cream);border-color:var(--teal);}
+.station-clock{
+  font-family:var(--font-mono);
+  font-size:1rem;
+  color:var(--amber);
+  border:1px solid var(--line-muted);
+  padding:6px 12px;
+  letter-spacing:0.1em;
+  background:var(--bg-tile-dark);
+}
+.station-clock small{
+  display:block;
+  color:var(--cream-dim);
+  font-size:0.58rem;
+  letter-spacing:0.15em;
+  margin-top:2px;
+}
+
+.intro{
+  color:var(--cream-dim);
+  font-size:0.85rem;
+  line-height:1.6;
+  max-width:640px;
+  margin:18px 0 28px;
+}
+.intro strong{color:var(--cream);font-weight:normal;}
+
+/* ---------- SEARCH ---------- */
+.search-panel{
+  background:var(--bg-panel);
+  border:1px solid var(--line-muted);
+  padding:18px;
+  margin-bottom:24px;
+}
+.search-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  position:relative;
+}
+.search-row label{
+  font-family:var(--font-display);
+  font-size:0.7rem;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--cream-dim);
+  display:block;
+  margin-bottom:6px;
+}
+.search-field{flex:1;min-width:220px;position:relative;}
+input#track-input{
+  width:100%;
+  background:var(--bg-tile-dark);
+  border:1px solid var(--line-muted);
+  color:var(--amber);
+  font-family:var(--font-mono);
+  font-size:1rem;
+  letter-spacing:0.08em;
+  padding:11px 12px;
+  outline:none;
+}
+input#track-input:focus{border-color:var(--amber);}
+input#track-input::placeholder{color:#5a5f68;}
+
+.autocomplete-list{
+  position:absolute;
+  top:calc(100% + 2px);
+  left:0;right:0;
+  background:var(--bg-tile-dark);
+  border:1px solid var(--line-muted);
+  z-index:20;
+  max-height:220px;
+  overflow-y:auto;
+  display:none;
+}
+.autocomplete-list.open{display:block;}
+.autocomplete-item{
+  padding:9px 12px;
+  font-size:0.8rem;
+  color:var(--cream-dim);
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.autocomplete-item:last-child{border-bottom:none;}
+.autocomplete-item:hover,.autocomplete-item.active{background:var(--bg-tile);color:var(--cream);}
+.autocomplete-item b{color:var(--amber);}
+
+button.btn{
+  font-family:var(--font-display);
+  font-size:0.78rem;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  background:var(--amber);
+  color:#1b1503;
+  border:none;
+  padding:0 22px;
+  cursor:pointer;
+  font-weight:600;
+  transition:background 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+  height:44px;
+}
+button.btn:hover{background:#ffce33;}
+button.btn:active{transform:translateY(1px);}
+button.btn:disabled{opacity:0.5;cursor:default;}
+button.btn:focus-visible, input#track-input:focus-visible, .chip:focus-visible, select:focus-visible{
+  outline:2px solid var(--teal);
+  outline-offset:2px;
+}
+button.btn.ghost{
+  background:transparent;
+  color:var(--cream-dim);
+  border:1px solid var(--line-muted);
+  height:38px;
+  padding:0 16px;
+}
+button.btn.ghost:hover{color:var(--cream);border-color:var(--cream-dim);}
+button.btn.small{height:34px;padding:0 14px;font-size:0.7rem;}
+
+.chips{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+.chip{
+  background:var(--bg-tile-dark);
+  border:1px solid var(--line-muted);
+  color:var(--cream-dim);
+  font-family:var(--font-mono);
+  font-size:0.72rem;
+  padding:7px 10px;
+  cursor:pointer;
+  letter-spacing:0.03em;
+}
+.chip:hover{border-color:var(--teal);color:var(--cream);}
+.chip b{color:var(--amber);}
+
+/* ---------- BOARD ---------- */
+.board-panel{
+  background:var(--bg-panel);
+  border:1px solid var(--line-muted);
+  padding:20px 20px 22px;
+  margin-bottom:24px;
+  position:relative;
+}
+.board-panel::before{
+  content:"";
+  position:absolute;
+  top:0;left:0;right:0;
+  height:3px;
+  background:linear-gradient(90deg, var(--amber), transparent 70%);
+  opacity:0.6;
+}
+.board-title{
+  font-family:var(--font-display);
+  font-size:0.72rem;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--cream-dim);
+  margin-bottom:14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  justify-content:space-between;
+}
+.board-title-left{display:flex;align-items:center;gap:8px;}
+.board-title .dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--teal);
+  box-shadow:0 0 8px var(--teal);
+  flex-shrink:0;
+}
+.board-title .dot.delivered{background:var(--amber);box-shadow:0 0 8px var(--amber);}
+
+.flap-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:6px 0;
+  border-bottom:1px solid rgba(128,128,128,0.12);
+}
+.flap-row:last-child{border-bottom:none;}
+.flap-label{
+  width:150px;
+  flex-shrink:0;
+  font-family:var(--font-display);
+  font-size:0.68rem;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--cream-dim);
+}
+.flap-chars{
+  display:flex;
+  gap:2px;
+  flex-wrap:wrap;
+}
+.flap-char{
+  width:19px;
+  height:26px;
+  background:var(--bg-tile);
+  color:var(--cream);
+  font-family:var(--font-mono);
+  font-weight:700;
+  font-size:0.95rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  border:1px solid var(--line-muted);
+  perspective:60px;
+}
+.flap-char::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;top:50%;
+  height:1px;
+  background:rgba(0,0,0,0.35);
+}
+.flap-row[data-field="estado"] .flap-char{color:var(--amber);}
+.flap-flip{animation:flipChar 0.12s linear;}
+@keyframes flipChar{
+  0%{transform:rotateX(0deg);}
+  50%{transform:rotateX(-90deg);}
+  100%{transform:rotateX(0deg);}
+}
+@media (prefers-reduced-motion: reduce){
+  .flap-flip{animation:none;}
+}
+@media (max-width:600px){
+  .flap-label{width:100%;margin-bottom:4px;}
+  .flap-row{flex-direction:column;align-items:flex-start;}
+  .flap-char{width:16px;height:22px;font-size:0.8rem;}
+}
+
+.board-overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(10,12,16,0.82);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:14px;
+  text-align:center;
+  padding:20px;
+  z-index:5;
+}
+[data-theme="light"] .board-overlay{background:rgba(255,255,255,0.92);}
+.board-overlay.show{display:flex;}
+.board-overlay .loading-text{
+  font-family:var(--font-display);
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  font-size:0.8rem;
+  color:var(--cream-dim);
+}
+.board-overlay .loading-text .cursor{
+  display:inline-block;
+  animation:blink 0.9s steps(1) infinite;
+}
+@keyframes blink{50%{opacity:0;}}
+.board-overlay .error-text{
+  font-family:var(--font-mono);
+  color:var(--rust);
+  font-size:0.85rem;
+  max-width:360px;
+}
+@media (prefers-reduced-motion: reduce){
+  .board-overlay .loading-text .cursor{animation:none;}
+}
+
+.controls-row{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:14px;
+  flex-wrap:wrap;
+}
+
+/* ---------- DETAIL PANEL ---------- */
+.detail-panel{
+  background:var(--bg-panel);
+  border:1px solid var(--line-muted);
+  padding:20px;
+  margin-bottom:24px;
+}
+.detail-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(200px,1fr));
+  gap:18px;
+  margin-top:12px;
+}
+.detail-item{
+  font-size:0.78rem;
+}
+.detail-item .k{
+  color:var(--cream-dim);
+  font-family:var(--font-display);
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  font-size:0.62rem;
+  margin-bottom:4px;
+}
+.detail-item .v{color:var(--cream);}
+.person-row{display:flex;align-items:center;gap:10px;}
+.avatar{
+  width:34px;height:34px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:0.75rem;
+  color:#fff;
+  flex-shrink:0;
+}
+
+/* ---------- VIEW TOGGLE ---------- */
+.view-toggle{
+  display:flex;
+  gap:0;
+  margin-bottom:0;
+}
+.view-toggle button{
+  font-family:var(--font-display);
+  font-size:0.66rem;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  background:var(--bg-tile-dark);
+  color:var(--cream-dim);
+  border:1px solid var(--line-muted);
+  padding:6px 12px;
+  cursor:pointer;
+}
+.view-toggle button.active{background:var(--teal);color:#04211d;border-color:var(--teal);}
+.view-toggle button:first-child{border-right:none;}
+
+/* ---------- ROUTE (SCHEMATIC) ---------- */
+.route-panel{
+  background:var(--bg-panel);
+  border:1px solid var(--line-muted);
+  padding:24px 20px 18px;
+  margin-bottom:24px;
+  overflow-x:auto;
+}
+.route-track{
+  position:relative;
+  display:flex;
+  justify-content:space-between;
+  min-width:520px;
+  padding:0 10px;
+  margin-top:26px;
+}
+.route-track::before{
+  content:"";
+  position:absolute;
+  top:11px;left:10px;right:10px;
+  height:2px;
+  background-image:repeating-linear-gradient(90deg, var(--line-muted) 0 6px, transparent 6px 11px);
+}
+.route-progress{
+  position:absolute;
+  top:11px;left:10px;
+  height:2px;
+  background:var(--teal);
+  width:0%;
+  transition:width 0.8s ease;
+}
+.route-stop{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:70px;
+  z-index:1;
+}
+.route-node{
+  width:12px;height:12px;
+  border-radius:50%;
+  background:var(--bg-tile-dark);
+  border:2px solid var(--line-muted);
+  margin-bottom:10px;
+}
+.route-stop.done .route-node{background:var(--teal);border-color:var(--teal);}
+.route-stop.current .route-node{
+  background:var(--amber);
+  border-color:var(--amber);
+  box-shadow:0 0 0 4px rgba(242,183,5,0.2);
+  animation:pulseNode 1.6s ease-in-out infinite;
+}
+@keyframes pulseNode{
+  0%,100%{box-shadow:0 0 0 4px rgba(242,183,5,0.2);}
+  50%{box-shadow:0 0 0 8px rgba(242,183,5,0.08);}
+}
+@media (prefers-reduced-motion: reduce){
+  .route-stop.current .route-node{animation:none;}
+}
+.route-stop-label{
+  font-size:0.62rem;
+  letter-spacing:0.03em;
+  text-align:center;
+  color:var(--cream-dim);
+  line-height:1.3;
+}
+.route-stop.current .route-stop-label{color:var(--amber);}
+.route-stop.done .route-stop-label{color:var(--cream);}
+
+/* ---------- ROUTE (MAP) ---------- */
+.map-panel{
+  background:var(--bg-panel);
+  border:1px solid var(--line-muted);
+  padding:20px;
+  margin-bottom:24px;
+}
+.map-wrap{
+  max-width:280px;
+  margin:14px auto 4px;
+}
+#argentina-map{width:100%;height:auto;display:block;}
+.map-note{
+  text-align:center;
+  font-size:0.66rem;
+  color:var(--cream-dim);
+  margin-top:6px;
+  letter-spacing:0.02em;
+}
+
+/* ---------- LOG ---------- */
+.log-panel{
+  background:var(--bg-panel);
+  border:1px solid var(--line-muted);
+  padding:20px;
+  margin-bottom:24px;
+}
+.log-list{
+  list-style:none;
+  margin:0;padding:0;
+  max-height:220px;
+  overflow-y:auto;
+}
+.log-list li{
+  display:flex;
+  gap:14px;
+  padding:9px 0;
+  border-bottom:1px solid rgba(128,128,128,0.12);
+  font-size:0.82rem;
+  animation:logIn 0.4s ease;
+}
+@keyframes logIn{
+  from{opacity:0; transform:translateY(-6px);}
+  to{opacity:1; transform:translateY(0);}
+}
+@media (prefers-reduced-motion: reduce){
+  .log-list li{animation:none;}
+}
+.log-list li:last-child{border-bottom:none;}
+.log-time{
+  color:var(--amber);
+  flex-shrink:0;
+  width:52px;
+}
+.log-text{color:var(--cream-dim);}
+
+/* ---------- CREAR ENVIO ---------- */
+.create-panel{
+  background:var(--bg-panel);
+  border:1px solid var(--line-muted);
+  padding:20px;
+  margin-bottom:24px;
+}
+.create-form-row{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-top:12px;
+  align-items:flex-end;
+}
+.form-field{display:flex;flex-direction:column;gap:6px;min-width:170px;flex:1;}
+.form-field label{
+  font-family:var(--font-display);
+  font-size:0.66rem;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--cream-dim);
+}
+select{
+  background:var(--bg-tile-dark);
+  border:1px solid var(--line-muted);
+  color:var(--cream);
+  font-family:var(--font-mono);
+  font-size:0.85rem;
+  padding:10px;
+  outline:none;
+}
+.create-msg{
+  margin-top:12px;
+  font-size:0.78rem;
+  color:var(--teal);
+  display:none;
+}
+.create-msg.show{display:block;}
+
+/* ---------- TOASTS ---------- */
+.toast-container{
+  position:fixed;
+  top:18px;right:18px;
+  z-index:100;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  max-width:300px;
+}
+@media (max-width:600px){
+  .toast-container{left:12px;right:12px;top:12px;max-width:none;}
+}
+.toast{
+  background:var(--bg-panel);
+  border:1px solid var(--teal);
+  border-left:3px solid var(--teal);
+  padding:11px 14px;
+  font-size:0.76rem;
+  color:var(--cream);
+  box-shadow:0 6px 18px rgba(0,0,0,0.35);
+  animation:toastIn 0.3s ease;
+}
+.toast b{color:var(--amber);display:block;font-family:var(--font-display);letter-spacing:0.06em;font-size:0.66rem;text-transform:uppercase;margin-bottom:3px;}
+@keyframes toastIn{
+  from{opacity:0; transform:translateY(-10px);}
+  to{opacity:1; transform:translateY(0);}
+}
+.toast.hide{animation:toastOut 0.3s ease forwards;}
+@keyframes toastOut{
+  to{opacity:0; transform:translateY(-10px);}
+}
+@media (prefers-reduced-motion: reduce){
+  .toast{animation:none;}
+  .toast.hide{animation:none;opacity:0;}
+}
+
+.footer-note{
+  text-align:center;
+  color:var(--cream-dim);
+  opacity:0.6;
+  font-size:0.7rem;
+  margin-top:28px;
+  letter-spacing:0.04em;
+}
+
+.empty-state{
+  color:var(--cream-dim);
+  font-size:0.85rem;
+  line-height:1.7;
+}
+.empty-state b{color:var(--rust);}
+</style>
+</head>
+<body>
+<div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark">AND<span>É</span>N</div>
+      <div class="tagline">Seguimiento nacional de envíos</div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema">🚉 Estación</button>
+      <button class="icon-btn" id="mute-toggle" title="Silenciar sonido" aria-label="Silenciar sonido">🔊</button>
+      <div class="station-clock" id="clock">
+        00:00:00
+        <small>hora de la terminal</small>
+      </div>
+    </div>
+  </header>
+
+  <p class="intro">
+    Un tablero de vuelos y trenes te dice todo lo que necesitás saber con una sola mirada.
+    <strong>ANDÉN</strong> aplica esa misma idea al seguimiento de paquetes: cada envío avanza
+    por un recorrido real de terminales, y el estado se anuncia letra por letra, como en los
+    tableros mecánicos de las viejas estaciones.
+  </p>
+
+  <section class="search-panel">
+    <div class="search-row">
+      <div class="search-field">
+        <label for="track-input">Código de seguimiento</label>
+        <input id="track-input" type="text" placeholder="Ej: AR-93820" autocomplete="off">
+        <div class="autocomplete-list" id="autocomplete-list"></div>
+      </div>
+      <button class="btn" id="track-btn">Buscar envío</button>
+    </div>
+    <div class="chips" id="chips" aria-label="Códigos de ejemplo">
+      <button class="chip" data-code="AR-93820"><b>AR-93820</b> · Bs. As. → Bariloche</button>
+      <button class="chip" data-code="AR-15774"><b>AR-15774</b> · Córdoba → Salta</button>
+      <button class="chip" data-code="AR-40021"><b>AR-40021</b> · Mar del Plata → Ushuaia</button>
+    </div>
+  </section>
+
+  <section class="board-panel">
+    <div class="board-title">
+      <div class="board-title-left"><span class="dot" id="status-dot"></span><span id="board-title-text">Tablero de estado</span></div>
+    </div>
+    <div id="board-body">
+      <div class="flap-row" data-field="codigo">
+        <span class="flap-label">Código</span>
+        <span class="flap-chars" data-len="10"></span>
+      </div>
+      <div class="flap-row" data-field="estado">
+        <span class="flap-label">Estado</span>
+        <span class="flap-chars" data-len="14"></span>
+      </div>
+      <div class="flap-row" data-field="parada">
+        <span class="flap-label">Parada actual</span>
+        <span class="flap-chars" data-len="20"></span>
+      </div>
+      <div class="flap-row" data-field="proxima">
+        <span class="flap-label">Próxima parada</span>
+        <span class="flap-chars" data-len="20"></span>
+      </div>
+      <div class="flap-row" data-field="destino">
+        <span class="flap-label">Destino final</span>
+        <span class="flap-chars" data-len="20"></span>
+      </div>
+      <div class="flap-row" data-field="llegada">
+        <span class="flap-label">Llegada estimada</span>
+        <span class="flap-chars" data-len="20"></span>
+      </div>
+    </div>
+    <div class="board-overlay" id="board-overlay">
+      <div class="loading-text" id="overlay-loading" style="display:none;">Consultando terminal central<span class="cursor">▌</span></div>
+      <div id="overlay-error" style="display:none;">
+        <div class="error-text">ERROR DE CONEXIÓN — no pudimos consultar el sistema central.</div>
+        <button class="btn small" id="retry-btn" style="margin-top:12px;">Reintentar</button>
+      </div>
+    </div>
+    <div class="controls-row" id="controls-row" style="display:none;">
+      <button class="btn ghost small" id="copy-link-btn">Copiar enlace</button>
+      <button class="btn ghost small" id="restart-btn">Reiniciar recorrido</button>
+    </div>
+  </section>
+
+  <section class="detail-panel" id="detail-panel" style="display:none;">
+    <div class="board-title"><span class="dot" style="background:var(--teal);box-shadow:0 0 8px var(--teal);"></span>Detalle del paquete</div>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">Tipo de envío</div><div class="v" id="detail-tipo">—</div></div>
+      <div class="detail-item"><div class="k">Peso</div><div class="v" id="detail-peso">—</div></div>
+      <div class="detail-item">
+        <div class="k">Remitente</div>
+        <div class="person-row"><span class="avatar" id="avatar-remitente"></span><span class="v" id="detail-remitente">—</span></div>
+      </div>
+      <div class="detail-item">
+        <div class="k">Destinatario</div>
+        <div class="person-row"><span class="avatar" id="avatar-destinatario"></span><span class="v" id="detail-destinatario">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="view-toggle" id="view-toggle" style="display:none;">
+    <button id="view-btn-schema" class="active">Vista estaciones</button>
+    <button id="view-btn-map">Vista mapa</button>
+  </div>
+
+  <section class="route-panel" id="route-panel" style="display:none;">
+    <div class="board-title"><span class="dot" style="background:var(--teal);box-shadow:0 0 8px var(--teal);"></span>Recorrido</div>
+    <div class="route-track" id="route-track">
+      <div class="route-progress" id="route-progress"></div>
+    </div>
+  </section>
+
+  <section class="map-panel" id="map-panel" style="display:none;">
+    <div class="board-title"><span class="dot" style="background:var(--teal);box-shadow:0 0 8px var(--teal);"></span>Recorrido en el mapa</div>
+    <div class="map-wrap">
+      <svg id="argentina-map" viewBox="0 0 300 610" xmlns="http://www.w3.org/2000/svg">
+        <polygon id="map-silhouette" points="95,8 145,8 170,40 205,70 225,95 215,130 200,165 210,200 205,235 185,265 175,300 160,335 150,375 140,415 128,455 118,495 112,535 108,565 100,565 95,535 88,495 82,455 75,415 68,375 62,335 58,295 55,255 52,215 50,175 52,135 58,95 68,60 80,30" />
+        <polygon id="map-tdf" points="95,575 140,575 150,595 110,603 90,590" />
+        <g id="map-route"></g>
+      </svg>
+    </div>
+    <div class="map-note">Mapa estilizado, no a escala — pensado para mostrar el recorrido, no la geografía exacta.</div>
+  </section>
+
+  <section class="log-panel" id="log-panel" style="display:none;">
+    <div class="board-title"><span class="dot" style="background:var(--teal);box-shadow:0 0 8px var(--teal);"></span>Bitácora</div>
+    <ul class="log-list" id="log-list"></ul>
+  </section>
+
+  <section class="create-panel">
+    <div class="board-title"><span class="dot" style="background:var(--amber);box-shadow:0 0 8px var(--amber);"></span>Crear un envío nuevo</div>
+    <p class="empty-state" style="margin-top:8px;">Elegí origen y destino: el sistema arma un código y un recorrido troncal entre esas dos terminales.</p>
+    <div class="create-form-row">
+      <div class="form-field">
+        <label for="origin-select">Origen</label>
+        <select id="origin-select"></select>
+      </div>
+      <div class="form-field">
+        <label for="destino-select">Destino</label>
+        <select id="destino-select"></select>
+      </div>
+      <button class="btn" id="create-btn">Generar envío</button>
+    </div>
+    <div class="create-msg" id="create-msg"></div>
+  </section>
+
+  <section class="board-panel" id="empty-panel">
+    <div class="empty-state">
+      Ingresá un código de seguimiento, elegí uno de los ejemplos de arriba, o generá un envío nuevo.
+      Si el código no existe, el tablero va a mostrar <b>CÓDIGO NO ENCONTRADO</b>.
+    </div>
+  </section>
+
+  <p class="footer-note">Proyecto de portafolio — datos simulados, sin backend real. HTML + CSS + JS puro (organizado en módulos por función, ver comentarios del código fuente).</p>
+
+</div>
+
+<script>
+/* =========================================================
+   MÓDULO: ESTADO GLOBAL
+   ========================================================= */
+const state = {
+  currentCode: null,
+  currentStageIndex: 0,
+  advanceTimer: null,
+  view: 'schema', // 'schema' | 'map'
+  isMuted: localStorage.getItem('anden_muted') === '1',
+  autocompleteIndex: -1
+};
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* =========================================================
+   MÓDULO: PERSISTENCIA (localStorage)
+   ========================================================= */
+const Storage = {
+  getCustomShipments(){
+    try{ return JSON.parse(localStorage.getItem('anden_custom_shipments') || '{}'); }
+    catch(e){ return {}; }
+  },
+  saveCustomShipments(obj){
+    localStorage.setItem('anden_custom_shipments', JSON.stringify(obj));
+  },
+  saveProgress(code, stageIndex){
+    localStorage.setItem('anden_progress', JSON.stringify({code, stageIndex}));
+  },
+  getProgress(){
+    try{ return JSON.parse(localStorage.getItem('anden_progress')); }
+    catch(e){ return null; }
+  },
+  getTheme(){ return localStorage.getItem('anden_theme') || 'dark'; },
+  saveTheme(t){ localStorage.setItem('anden_theme', t); }
+};
+
+/* =========================================================
+   MÓDULO: AUDIO (clack sintetizado, sin archivos externos)
+   ========================================================= */
+let audioCtx = null;
+function ensureAudio(){
+  if(audioCtx) return;
+  try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ /* no-op */ }
+}
+function playClack(){
+  if(state.isMuted || !audioCtx) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.value = 210 + Math.random() * 70;
+  gain.gain.setValueAtTime(0.05, t);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(t);
+  osc.stop(t + 0.06);
+}
+
+/* =========================================================
+   MÓDULO: DATOS — CIUDADES Y COORDENADAS DEL MAPA
+   ========================================================= */
+const CITY_COORDS = {
+  "JUJUY":[120,30], "SALTA":[130,55], "FORMOSA":[190,70], "RESISTENCIA":[175,95],
+  "SANTIAGO DEL ESTERO":[140,110], "TUCUMÁN":[120,95], "CORRIENTES":[195,110], "POSADAS":[220,120],
+  "CATAMARCA":[105,120], "LA RIOJA":[95,145], "SANTA FE":[165,150], "CÓRDOBA":[125,160],
+  "PARANÁ":[170,155], "SAN JUAN":[75,175], "ROSARIO":[160,175], "SAN LUIS":[95,190],
+  "MENDOZA":[70,200], "BS. AS.":[175,215], "LA PLATA":[180,225], "MAR DEL PLATA":[175,255],
+  "BAHÍA BLANCA":[150,280], "VIEDMA":[150,310], "NEUQUÉN":[110,300], "BARILOCHE":[85,330],
+  "TRELEW":[145,360], "COMODORO RIVADAVIA":[130,410], "RÍO GALLEGOS":[110,480], "USHUAIA":[115,545]
+};
+const MASTER_CITIES = Object.keys(CITY_COORDS);
+
+function coordsFor(cityName){
+  const clean = cityName.replace(' - RETIRO', '').trim();
+  return CITY_COORDS[clean] || CITY_COORDS[cityName] || [150,300];
+}
+
+/* =========================================================
+   MÓDULO: DATOS — ENVÍOS BASE (predefinidos)
+   ========================================================= */
+const SHIPMENTS = {
+  "AR-93820": {
+    stops: ["BS. AS. - RETIRO","ROSARIO","CÓRDOBA","MENDOZA","NEUQUÉN","BARILOCHE"],
+    startIndex: 0,
+    destinoFinal: "BARILOCHE",
+    tipo:"PAQUETE ESTÁNDAR", peso:"2.4 KG",
+    remitente:"M. GÓMEZ", destinatario:"J. PÉREZ",
+    stages: [
+      { estado:"RETIRADO", llegada:"HOY 22:10", log:"09:14 — Paquete retirado en Bs. As. - Retiro." },
+      { estado:"EN TRÁNSITO", llegada:"HOY 22:10", log:"12:40 — Llegó a la terminal de Rosario." },
+      { estado:"EN TRÁNSITO", llegada:"MAÑANA 03:20", log:"17:05 — Llegó a la terminal de Córdoba." },
+      { estado:"EN TRÁNSITO", llegada:"MAÑANA 03:20", log:"23:52 — Llegó a la terminal de Mendoza." },
+      { estado:"EN TRÁNSITO", llegada:"MAÑANA 09:45", log:"04:18 — Llegó a la terminal de Neuquén." },
+      { estado:"ENTREGADO", llegada:"MAÑANA 09:45", log:"09:45 — Entregado en destino: Bariloche." }
+    ]
+  },
+  "AR-15774": {
+    stops: ["CÓRDOBA","SANTIAGO DEL ESTERO","TUCUMÁN","SALTA"],
+    startIndex: 2,
+    destinoFinal: "SALTA",
+    tipo:"SOBRE DOCUMENTAL", peso:"0.5 KG",
+    remitente:"L. FERNÁNDEZ", destinatario:"A. TORRES",
+    stages: [
+      { estado:"RETIRADO", llegada:"HOY 20:00", log:"07:30 — Paquete retirado en Córdoba." },
+      { estado:"EN TRÁNSITO", llegada:"HOY 20:00", log:"11:15 — Llegó a la terminal de Santiago del Estero." },
+      { estado:"EN TRÁNSITO", llegada:"HOY 20:00", log:"15:02 — Llegó a la terminal de Tucumán." },
+      { estado:"ENTREGADO", llegada:"HOY 20:00", log:"19:47 — Entregado en destino: Salta." }
+    ]
+  },
+  "AR-40021": {
+    stops: ["MAR DEL PLATA","BS. AS.","BAHÍA BLANCA","RÍO GALLEGOS","USHUAIA"],
+    startIndex: 4,
+    destinoFinal: "USHUAIA",
+    tipo:"CARGA FRÁGIL", peso:"7.0 KG",
+    remitente:"C. ROMERO", destinatario:"S. DÍAZ",
+    stages: [
+      { estado:"RETIRADO", llegada:"—", log:"LUN 08:05 — Paquete retirado en Mar del Plata." },
+      { estado:"EN TRÁNSITO", llegada:"—", log:"LUN 14:30 — Llegó a la terminal de Bs. As." },
+      { estado:"EN TRÁNSITO", llegada:"—", log:"MAR 06:12 — Llegó a la terminal de Bahía Blanca." },
+      { estado:"EN TRÁNSITO", llegada:"—", log:"MIÉ 21:40 — Llegó a la terminal de Río Gallegos." },
+      { estado:"ENTREGADO", llegada:"JUE 10:05", log:"JUE 10:05 — Entregado en destino: Ushuaia." }
+    ]
+  }
+};
+
+let customShipments = Storage.getCustomShipments();
+function allShipments(){ return Object.assign({}, SHIPMENTS, customShipments); }
+
+const FLAP_CHARSET = " ABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚ0123456789-.:";
+
+/* =========================================================
+   MÓDULO: GENERADOR DE ENVÍOS (formulario "crear envío")
+   ========================================================= */
+const TIPOS = ["PAQUETE ESTÁNDAR","SOBRE DOCUMENTAL","CARGA FRÁGIL","ENVÍO EXPRESS"];
+const PESOS = ["0.5 KG","1.2 KG","2.4 KG","4.8 KG","7.0 KG","10.5 KG"];
+const NOMBRES = ["M. GÓMEZ","J. PÉREZ","L. FERNÁNDEZ","A. TORRES","C. ROMERO","S. DÍAZ","N. ÁLVAREZ","R. SOSA","V. CASTRO","P. MOLINA"];
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function buildRoute(origin, destino){
+  const sorted = [...MASTER_CITIES].sort((a,b)=> CITY_COORDS[a][1] - CITY_COORDS[b][1]);
+  const iO = sorted.indexOf(origin), iD = sorted.indexOf(destino);
+  if(iO === -1 || iD === -1) return null;
+  let slice = iO <= iD ? sorted.slice(iO, iD+1) : sorted.slice(iD, iO+1).reverse();
+  if(slice.length > 6){
+    const step = (slice.length - 1) / 5;
+    const picked = [];
+    for(let i=0;i<6;i++) picked.push(slice[Math.round(i*step)]);
+    slice = [...new Set(picked)];
+    slice[0] = origin;
+    slice[slice.length-1] = destino;
+  }
+  return slice;
+}
+
+function genCode(){
+  const existing = allShipments();
+  let code;
+  do{ code = 'AR-' + Math.floor(10000 + Math.random()*90000); }
+  while(existing[code]);
+  return code;
+}
+
+function generateShipment(origin, destino){
+  const stops = buildRoute(origin, destino);
+  if(!stops || stops.length < 2) return null;
+  const stages = stops.map((city, i)=>{
+    const isFirst = i === 0, isLast = i === stops.length - 1;
+    const estado = isFirst ? "RETIRADO" : (isLast ? "ENTREGADO" : "EN TRÁNSITO");
+    const hh = String(8 + i*3).padStart(2,'0');
+    const llegada = isLast ? "HOY " + hh + ":00" : (i < 2 ? "HOY " + hh + ":30" : "MAÑANA " + hh + ":30");
+    const log = isFirst
+      ? "AHORA — Paquete retirado en " + city + "."
+      : (isLast ? "EST. — Entregado en destino: " + city + "." : "EST. — Llegó a la terminal de " + city + ".");
+    return { estado, llegada, log };
+  });
+  return {
+    stops, startIndex:0, destinoFinal: destino,
+    tipo: pick(TIPOS), peso: pick(PESOS),
+    remitente: pick(NOMBRES), destinatario: pick(NOMBRES),
+    stages
+  };
+}
+
+/* =========================================================
+   MÓDULO: API SIMULADA (fetch + delay + errores aleatorios)
+   ========================================================= */
+function fetchShipment(code){
+  return new Promise((resolve, reject)=>{
+    const delay = 500 + Math.random()*500;
+    setTimeout(()=>{
+      if(Math.random() < 0.12){
+        reject(new Error('network'));
+        return;
+      }
+      resolve(allShipments()[code] || null);
+    }, delay);
+  });
+}
+
+function showOverlay(mode){
+  const overlay = document.getElementById('board-overlay');
+  document.getElementById('overlay-loading').style.display = mode === 'loading' ? 'block' : 'none';
+  document.getElementById('overlay-error').style.display = mode === 'error' ? 'block' : 'none';
+  overlay.classList.toggle('show', mode === 'loading' || mode === 'error');
+}
+function hideOverlay(){ document.getElementById('board-overlay').classList.remove('show'); }
+
+function performSearch(rawCode){
+  const code = rawCode.trim().toUpperCase();
+  if(!code) return;
+  closeAutocomplete();
+  document.getElementById('track-btn').disabled = true;
+  showOverlay('loading');
+  fetchShipment(code).then(data=>{
+    hideOverlay();
+    document.getElementById('track-btn').disabled = false;
+    loadShipmentData(code, data);
+  }).catch(()=>{
+    hideOverlay();
+    document.getElementById('track-btn').disabled = false;
+    showOverlay('error');
+    document.getElementById('retry-btn').onclick = ()=> performSearch(code);
+  });
+}
+
+/* =========================================================
+   MÓDULO: TABLERO DE FLAPS
+   ========================================================= */
+document.querySelectorAll('.flap-chars').forEach(row=>{
+  const len = parseInt(row.dataset.len, 10);
+  for(let i=0;i<len;i++){
+    const cell = document.createElement('span');
+    cell.className = 'flap-char';
+    cell.textContent = ' ';
+    row.appendChild(cell);
+  }
+});
+
+function padText(str, len){
+  str = (str || '').toUpperCase();
+  if(str.length > len) return str.slice(0, len);
+  return str + ' '.repeat(len - str.length);
+}
+
+function flipChar(el, targetChar){
+  if(reducedMotion){ el.textContent = targetChar; return; }
+  const steps = 3 + Math.floor(Math.random()*4);
+  let i = 0;
+  function step(){
+    el.classList.remove('flap-flip');
+    void el.offsetWidth;
+    el.classList.add('flap-flip');
+    setTimeout(()=>{
+      if(i < steps - 1){
+        el.textContent = FLAP_CHARSET[Math.floor(Math.random()*FLAP_CHARSET.length)];
+        i++;
+        step();
+      } else {
+        el.textContent = targetChar;
+      }
+    }, 55);
+  }
+  step();
+}
+
+function setFlapField(fieldName, text){
+  const row = document.querySelector('.flap-row[data-field="'+fieldName+'"] .flap-chars');
+  const cells = row.querySelectorAll('.flap-char');
+  const padded = padText(text, cells.length);
+  cells.forEach((cell, i)=>{
+    setTimeout(()=>{ flipChar(cell, padded[i]); }, i * 28);
+  });
+}
+
+/* =========================================================
+   MÓDULO: RECORRIDO — VISTA ESQUEMA
+   ========================================================= */
+function renderRouteSchema(shipment, stageIdx){
+  const track = document.getElementById('route-track');
+  track.innerHTML = '<div class="route-progress" id="route-progress"></div>';
+  const stops = shipment.stops;
+  stops.forEach((stop, i)=>{
+    const el = document.createElement('div');
+    el.className = 'route-stop' + (i < stageIdx ? ' done' : '') + (i === stageIdx ? ' current' : '');
+    el.innerHTML = '<span class="route-node"></span><span class="route-stop-label">'+stop+'</span>';
+    track.appendChild(el);
+  });
+  const progressPct = stops.length > 1 ? (stageIdx / (stops.length - 1)) * 100 : 0;
+  requestAnimationFrame(()=>{
+    const prog = document.getElementById('route-progress');
+    if(prog) prog.style.width = progressPct + '%';
+  });
+}
+
+/* =========================================================
+   MÓDULO: RECORRIDO — VISTA MAPA
+   ========================================================= */
+const SVGNS = "http://www.w3.org/2000/svg";
+function renderRouteMap(shipment, stageIdx){
+  const g = document.getElementById('map-route');
+  g.innerHTML = '';
+  const stops = shipment.stops;
+  const pts = stops.map(coordsFor);
+
+  const dashed = document.createElementNS(SVGNS, 'polyline');
+  dashed.setAttribute('points', pts.map(p=>p.join(',')).join(' '));
+  dashed.setAttribute('fill', 'none');
+  dashed.setAttribute('stroke', 'var(--line-muted)');
+  dashed.setAttribute('stroke-width', '2');
+  dashed.setAttribute('stroke-dasharray', '5 4');
+  g.appendChild(dashed);
+
+  if(stageIdx > 0){
+    const solid = document.createElementNS(SVGNS, 'polyline');
+    solid.setAttribute('points', pts.slice(0, stageIdx+1).map(p=>p.join(',')).join(' '));
+    solid.setAttribute('fill', 'none');
+    solid.setAttribute('stroke', 'var(--teal)');
+    solid.setAttribute('stroke-width', '2.5');
+    g.appendChild(solid);
+  }
+
+  pts.forEach((p, i)=>{
+    const c = document.createElementNS(SVGNS, 'circle');
+    c.setAttribute('cx', p[0]);
+    c.setAttribute('cy', p[1]);
+    const isCurrent = i === stageIdx;
+    c.setAttribute('r', isCurrent ? 6 : 4);
+    c.setAttribute('fill', i < stageIdx ? 'var(--teal)' : (isCurrent ? 'var(--amber)' : 'var(--bg-tile-dark)'));
+    c.setAttribute('stroke', isCurrent ? 'var(--amber)' : 'var(--line-muted)');
+    c.setAttribute('stroke-width', '1.5');
+    if(isCurrent && !reducedMotion) c.setAttribute('class', 'map-pulse');
+    g.appendChild(c);
+
+    const label = document.createElementNS(SVGNS, 'text');
+    label.setAttribute('x', p[0] + 8);
+    label.setAttribute('y', p[1] + 3);
+    label.setAttribute('font-size', '7');
+    label.setAttribute('font-family', 'monospace');
+    label.setAttribute('fill', isCurrent ? 'var(--amber)' : 'var(--cream-dim)');
+    label.textContent = stops[i].replace(' - RETIRO','');
+    g.appendChild(label);
+  });
+}
+const mapPulseStyle = document.createElement('style');
+mapPulseStyle.textContent = '.map-pulse{animation:mapPulseAnim 1.6s ease-in-out infinite;} @keyframes mapPulseAnim{0%,100%{opacity:1;}50%{opacity:0.35;}}';
+document.head.appendChild(mapPulseStyle);
+
+function renderRoute(shipment, stageIdx){
+  renderRouteSchema(shipment, stageIdx);
+  renderRouteMap(shipment, stageIdx);
+}
+
+function setView(view){
+  state.view = view;
+  document.getElementById('route-panel').style.display = view === 'schema' ? 'block' : 'none';
+  document.getElementById('map-panel').style.display = view === 'map' ? 'block' : 'none';
+  document.getElementById('view-btn-schema').classList.toggle('active', view === 'schema');
+  document.getElementById('view-btn-map').classList.toggle('active', view === 'map');
+}
+document.getElementById('view-btn-schema').addEventListener('click', ()=> setView('schema'));
+document.getElementById('view-btn-map').addEventListener('click', ()=> setView('map'));
+
+/* =========================================================
+   MÓDULO: BITÁCORA Y NOTIFICACIONES (toasts)
+   ========================================================= */
+function addLogEntry(text){
+  const list = document.getElementById('log-list');
+  const parts = text.split(' — ');
+  const li = document.createElement('li');
+  li.innerHTML = '<span class="log-time">'+(parts[0]||'')+'</span><span class="log-text">'+(parts[1]||text)+'</span>';
+  list.insertBefore(li, list.firstChild);
+}
+
+function showToast(title, text){
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = '<b>'+title+'</b>'+text;
+  container.appendChild(el);
+  setTimeout(()=>{
+    el.classList.add('hide');
+    setTimeout(()=> el.remove(), 350);
+  }, 4000);
+}
+
+/* =========================================================
+   MÓDULO: DETALLE DEL PAQUETE
+   ========================================================= */
+function hashHue(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++) h = (h * 31 + str.charCodeAt(i)) % 360;
+  return Math.abs(h);
+}
+function initialsOf(name){
+  const parts = name.replace('.', '').split(' ').filter(Boolean);
+  if(parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0,2).toUpperCase();
+}
+function renderDetail(shipment){
+  document.getElementById('detail-panel').style.display = 'block';
+  document.getElementById('detail-tipo').textContent = shipment.tipo;
+  document.getElementById('detail-peso').textContent = shipment.peso;
+  document.getElementById('detail-remitente').textContent = shipment.remitente;
+  document.getElementById('detail-destinatario').textContent = shipment.destinatario;
+  const avR = document.getElementById('avatar-remitente');
+  const avD = document.getElementById('avatar-destinatario');
+  avR.textContent = initialsOf(shipment.remitente);
+  avD.textContent = initialsOf(shipment.destinatario);
+  avR.style.background = 'hsl(' + hashHue(shipment.remitente) + ',45%,42%)';
+  avD.style.background = 'hsl(' + hashHue(shipment.destinatario) + ',45%,42%)';
+}
+
+/* =========================================================
+   MÓDULO: CARGA DE ENVÍO EN EL TABLERO
+   ========================================================= */
+function updateBoardForStage(){
+  const all = allShipments();
+  const shipment = all[state.currentCode];
+  if(!shipment) return;
+  const stops = shipment.stops;
+  const stage = shipment.stages[state.currentStageIndex];
+  const isDelivered = stage.estado === 'ENTREGADO';
+  const paradaActual = stops[Math.min(state.currentStageIndex, stops.length - 1)];
+  const proxima = state.currentStageIndex < stops.length - 1 ? stops[state.currentStageIndex + 1] : '—';
+
+  playClack();
+  setFlapField('codigo', state.currentCode);
+  setFlapField('estado', stage.estado);
+  setFlapField('parada', paradaActual);
+  setFlapField('proxima', proxima);
+  setFlapField('destino', shipment.destinoFinal);
+  setFlapField('llegada', stage.llegada);
+
+  document.getElementById('status-dot').classList.toggle('delivered', isDelivered);
+  document.getElementById('board-title-text').textContent = isDelivered ? 'Tablero de estado — entregado' : 'Tablero de estado — en curso';
+
+  renderRoute(shipment, Math.min(state.currentStageIndex, stops.length - 1));
+  addLogEntry(stage.log);
+  showToast(isDelivered ? 'Entregado' : 'Nuevo estado', stage.log.split(' — ')[1] || stage.log);
+
+  document.getElementById('controls-row').style.display = 'flex';
+  document.getElementById('view-toggle').style.display = 'flex';
+
+  Storage.saveProgress(state.currentCode, state.currentStageIndex);
+
+  if(state.advanceTimer) clearTimeout(state.advanceTimer);
+  if(!isDelivered){
+    state.advanceTimer = setTimeout(()=>{
+      state.currentStageIndex++;
+      updateBoardForStage();
+    }, 5200);
+  }
+}
+
+function loadShipmentData(code, shipment, resumeIndex){
+  hideOverlay();
+  document.getElementById('empty-panel').style.display = 'none';
+  document.getElementById('log-panel').style.display = 'block';
+  document.getElementById('log-list').innerHTML = '';
+  if(state.advanceTimer) clearTimeout(state.advanceTimer);
+
+  if(!shipment){
+    state.currentCode = null;
+    setFlapField('codigo', code || '—');
+    setFlapField('estado', 'NO ENCONTRADO');
+    setFlapField('parada', '—');
+    setFlapField('proxima', '—');
+    setFlapField('destino', '—');
+    setFlapField('llegada', '—');
+    document.getElementById('status-dot').classList.remove('delivered');
+    document.getElementById('board-title-text').textContent = 'Tablero de estado — código no encontrado';
+    document.getElementById('route-panel').style.display = 'none';
+    document.getElementById('map-panel').style.display = 'none';
+    document.getElementById('view-toggle').style.display = 'none';
+    document.getElementById('log-panel').style.display = 'none';
+    document.getElementById('detail-panel').style.display = 'none';
+    document.getElementById('controls-row').style.display = 'none';
+    return;
+  }
+
+  if(!allShipments()[code]) SHIPMENTS[code] = shipment;
+  state.currentCode = code;
+  state.currentStageIndex = (typeof resumeIndex === 'number' && resumeIndex < shipment.stages.length) ? resumeIndex : shipment.startIndex;
+  renderDetail(shipment);
+  setView(state.view);
+  updateBoardForStage();
+  updateUrl(code);
+}
+
+/* =========================================================
+   MÓDULO: COMPARTIR POR URL
+   ========================================================= */
+function updateUrl(code){
+  const url = new URL(window.location.href);
+  url.searchParams.set('codigo', code);
+  history.replaceState(null, '', url.toString());
+}
+
+/* =========================================================
+   MÓDULO: AUTOCOMPLETADO
+   ========================================================= */
+const acList = document.getElementById('autocomplete-list');
+function closeAutocomplete(){ acList.classList.remove('open'); acList.innerHTML=''; state.autocompleteIndex = -1; }
+function openAutocomplete(query){
+  const all = allShipments();
+  const q = query.trim().toUpperCase();
+  if(!q){ closeAutocomplete(); return; }
+  const matches = Object.keys(all).filter(code => code.includes(q)).slice(0, 8);
+  if(matches.length === 0){ closeAutocomplete(); return; }
+  acList.innerHTML = '';
+  matches.forEach(code=>{
+    const s = all[code];
+    const item = document.createElement('div');
+    item.className = 'autocomplete-item';
+    item.innerHTML = '<b>'+code+'</b><span>'+s.stops[0].replace(' - RETIRO','')+' → '+s.destinoFinal+'</span>';
+    item.addEventListener('click', ()=>{
+      document.getElementById('track-input').value = code;
+      performSearch(code);
+    });
+    acList.appendChild(item);
+  });
+  acList.classList.add('open');
+  state.autocompleteIndex = -1;
+}
+document.getElementById('track-input').addEventListener('input', (e)=> openAutocomplete(e.target.value));
+document.getElementById('track-input').addEventListener('keydown', (e)=>{
+  const items = acList.querySelectorAll('.autocomplete-item');
+  if(e.key === 'ArrowDown' && items.length){
+    e.preventDefault();
+    state.autocompleteIndex = Math.min(state.autocompleteIndex + 1, items.length - 1);
+    items.forEach((it,i)=> it.classList.toggle('active', i === state.autocompleteIndex));
+  } else if(e.key === 'ArrowUp' && items.length){
+    e.preventDefault();
+    state.autocompleteIndex = Math.max(state.autocompleteIndex - 1, 0);
+    items.forEach((it,i)=> it.classList.toggle('active', i === state.autocompleteIndex));
+  } else if(e.key === 'Enter'){
+    if(state.autocompleteIndex >= 0 && items[state.autocompleteIndex]){
+      items[state.autocompleteIndex].click();
+    } else if(e.target.value.trim()){
+      performSearch(e.target.value);
+    }
+  } else if(e.key === 'Escape'){
+    closeAutocomplete();
+  }
+});
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.search-field')) closeAutocomplete();
+});
+
+/* =========================================================
+   MÓDULO: FORMULARIO "CREAR ENVÍO"
+   ========================================================= */
+const originSelect = document.getElementById('origin-select');
+const destinoSelect = document.getElementById('destino-select');
+MASTER_CITIES.forEach(city=>{
+  const o1 = document.createElement('option'); o1.value = city; o1.textContent = city;
+  originSelect.appendChild(o1);
+  const o2 = document.createElement('option'); o2.value = city; o2.textContent = city;
+  destinoSelect.appendChild(o2);
+});
+originSelect.value = 'BS. AS.';
+destinoSelect.value = 'USHUAIA';
+
+document.getElementById('create-btn').addEventListener('click', ()=>{
+  const origin = originSelect.value, destino = destinoSelect.value;
+  const msg = document.getElementById('create-msg');
+  if(origin === destino){
+    msg.textContent = 'Elegí dos terminales distintas.';
+    msg.classList.add('show');
+    return;
+  }
+  const shipment = generateShipment(origin, destino);
+  if(!shipment){
+    msg.textContent = 'No se pudo armar el recorrido, probá con otras terminales.';
+    msg.classList.add('show');
+    return;
+  }
+  const code = genCode();
+  customShipments[code] = shipment;
+  Storage.saveCustomShipments(customShipments);
+  msg.innerHTML = 'Envío creado: <b style="color:var(--amber)">'+code+'</b> ('+shipment.stops.length+' paradas). Cargando en el tablero...';
+  msg.classList.add('show');
+  document.getElementById('track-input').value = code;
+  performSearch(code);
+});
+
+/* =========================================================
+   MÓDULO: BÚSQUEDA — controles
+   ========================================================= */
+document.getElementById('track-btn').addEventListener('click', ()=>{
+  ensureAudio();
+  const val = document.getElementById('track-input').value;
+  if(val.trim()) performSearch(val);
+});
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    ensureAudio();
+    document.getElementById('track-input').value = chip.dataset.code;
+    performSearch(chip.dataset.code);
+  });
+});
+document.getElementById('restart-btn').addEventListener('click', ()=>{
+  if(state.currentCode) loadShipmentData(state.currentCode, allShipments()[state.currentCode]);
+});
+document.getElementById('copy-link-btn').addEventListener('click', ()=>{
+  if(!state.currentCode) return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('codigo', state.currentCode);
+  navigator.clipboard.writeText(url.toString()).then(()=>{
+    showToast('Enlace copiado', 'Se copió el link de este envío al portapapeles.');
+  }).catch(()=>{
+    showToast('No se pudo copiar', 'Copiá la URL manualmente desde la barra del navegador.');
+  });
+});
+
+/* =========================================================
+   MÓDULO: TEMA (Estación / Aeropuerto)
+   ========================================================= */
+function applyTheme(theme){
+  if(theme === 'light'){
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('theme-toggle').textContent = '🛫 Aeropuerto';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('theme-toggle').textContent = '🚉 Estación';
+  }
+  Storage.saveTheme(theme);
+}
+document.getElementById('theme-toggle').addEventListener('click', ()=>{
+  const next = Storage.getTheme() === 'light' ? 'dark' : 'light';
+  applyTheme(next);
+});
+
+/* =========================================================
+   MÓDULO: SILENCIO
+   ========================================================= */
+function applyMute(muted){
+  state.isMuted = muted;
+  document.getElementById('mute-toggle').textContent = muted ? '🔇' : '🔊';
+  localStorage.setItem('anden_muted', muted ? '1' : '0');
+}
+document.getElementById('mute-toggle').addEventListener('click', ()=>{
+  ensureAudio();
+  applyMute(!state.isMuted);
+});
+
+/* =========================================================
+   MÓDULO: RELOJ DE ESTACIÓN
+   ========================================================= */
+function tickClock(){
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').innerHTML = hh+':'+mm+':'+ss+'<small>hora de la terminal</small>';
+}
+tickClock();
+setInterval(tickClock, 1000);
+
+/* =========================================================
+   MÓDULO: INICIALIZACIÓN
+   ========================================================= */
+(function init(){
+  applyTheme(Storage.getTheme());
+  applyMute(state.isMuted);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlCode = urlParams.get('codigo');
+  const progress = Storage.getProgress();
+
+  if(urlCode && allShipments()[urlCode]){
+    document.getElementById('track-input').value = urlCode;
+    const resume = (progress && progress.code === urlCode) ? progress.stageIndex : undefined;
+    loadShipmentData(urlCode, allShipments()[urlCode], resume);
+  } else if(progress && allShipments()[progress.code]){
+    document.getElementById('track-input').value = progress.code;
+    loadShipmentData(progress.code, allShipments()[progress.code], progress.stageIndex);
+  }
+})();
+</script>
+</body>
+</html>
